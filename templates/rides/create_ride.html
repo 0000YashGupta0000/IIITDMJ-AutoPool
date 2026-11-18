@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Post a ride{% endblock %}
+{% block content %}
+<h1 class="h3 mt-2">Post a ride</h1>
+<p class="text-secondary">You take one seat. Others join and split the fare with you.</p>
+
+<form method="post" class="panel" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>{% endif %}
+
+  <div class="mb-3">
+    <div class="form-label" id="dir-label">Where are you headed?</div>
+    <div class="segmented" role="radiogroup" aria-labelledby="dir-label">
+      {% for r in form.direction %}
+        <input type="radio" name="{{ r.data.name }}" id="{{ r.id_for_label }}" value="{{ r.data.value }}" {% if r.data.selected %}checked{% endif %}>
+        <label for="{{ r.id_for_label }}">{{ r.choice_label }}</label>
+      {% endfor %}
+    </div>
+    {{ form.direction.errors }}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="{{ form.location.id_for_label }}" id="loc-label">Drop point in the city</label>
+    {{ form.location }}{{ form.location.errors }}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="{{ form.pickup_point.id_for_label }}">{{ form.pickup_point.label }}</label>
+    {{ form.pickup_point }}{{ form.pickup_point.errors }}
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-7"><label class="form-label" for="{{ form.travel_date.id_for_label }}">Date</label>{{ form.travel_date }}{{ form.travel_date.errors }}</div>
+    <div class="col-5"><label class="form-label" for="{{ form.travel_time.id_for_label }}">Time</label>{{ form.travel_time }}{{ form.travel_time.errors }}</div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-6"><label class="form-label" for="{{ form.seats_available.id_for_label }}">{{ form.seats_available.label }}</label>{{ form.seats_available }}{{ form.seats_available.errors }}</div>
+    <div class="col-6"><label class="form-label" for="{{ form.estimated_total_fare.id_for_label }}">{{ form.estimated_total_fare.label }}</label>{{ form.estimated_total_fare }}{{ form.estimated_total_fare.errors }}</div>
+  </div>
+
+  <div class="fare-preview mb-3" id="fare-preview" aria-live="polite">Enter the fare to see each person's share.</div>
+
+  <div class="mb-3">
+    <label class="form-label" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+    {{ form.notes }}{{ form.notes.errors }}
+  </div>
+
+  <div class="form-check form-switch mb-2">
+    {{ form.has_luggage_space }}
+    <label class="form-check-label" for="{{ form.has_luggage_space.id_for_label }}">{{ form.has_luggage_space.label }}</label>
+  </div>
+  <div class="form-check form-switch mb-4">
+    {{ form.female_only }}
+    <label class="form-check-label" for="{{ form.female_only.id_for_label }}">{{ form.female_only.label }}</label>
+    {{ form.female_only.errors }}
+  </div>
+
+  <button class="btn btn-auto w-100">Post ride</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const sel = n => document.querySelector('[name="'+n+'"]');
+  const fare = sel('estimated_total_fare'), seats = sel('seats_available'),
+        prev = document.getElementById('fare-preview'), lbl = document.getElementById('loc-label');
+  document.querySelectorAll('input[type=checkbox]').forEach(c=>c.classList.add('form-check-input'));
+  document.querySelectorAll('select,input[type=date],input[type=time],input[type=number],textarea').forEach(e=>e.classList.add(e.tagName==='SELECT'?'form-select':'form-control'));
+  function update(){
+    const total = parseInt(fare.value,10), open = parseInt(seats.value,10) || 2;
+    if(!total){ prev.textContent = 'Enter the fare to see each person\u2019s share.'; return; }
+    const onBoard = 3 - open, now = Math.ceil(total/onBoard), full = Math.ceil(total/3);
+    prev.innerHTML = 'Right now (' + onBoard + ' on board): <b>\u20B9' + now + '</b> each. Full auto: <b>\u20B9' + full + '</b> each.';
+  }
+  function dir(){
+    const v = (document.querySelector('input[name="direction"]:checked')||{}).value;
+    lbl.textContent = v === 'INBOUND' ? 'Pickup point in the city' : 'Drop point in the city';
+  }
+  [fare,seats].forEach(e=>e.addEventListener('input',update));
+  document.querySelectorAll('input[name="direction"]').forEach(r=>r.addEventListener('change',dir));
+  update(); dir();
+})();
+</script>
+{% endblock %}

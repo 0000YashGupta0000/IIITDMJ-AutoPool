@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}My rides{% endblock %}
+{% block content %}
+<h1 class="h3 mt-2 mb-3">My rides</h1>
+
+{% if notes %}
+<div class="panel mb-3">
+  <div class="fw-bold mb-2">Updates</div>
+  {% for n in notes %}
+    <div class="req"><div class="small">{{ n.message }}{% if not n.read %} <span class="chip wait">new</span>{% endif %}</div>
+    <div class="small text-secondary text-nowrap">{{ n.created_at|date:"j M, g:i A" }}</div></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<ul class="nav nav-pills mb-3" role="tablist">
+  <li class="nav-item flex-fill" role="presentation"><button class="nav-link w-100 active" data-bs-toggle="pill" data-bs-target="#tab-posted" type="button" role="tab">Posted by me</button></li>
+  <li class="nav-item flex-fill" role="presentation"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#tab-joined" type="button" role="tab">Joined</button></li>
+</ul>
+
+<div class="tab-content">
+  <section class="tab-pane fade show active" id="tab-posted" role="tabpanel">
+    {% for ride in posted_rides %}
+    <article class="ride {% if ride.direction == 'INBOUND' %}inbound{% endif %}">
+      <div class="d-flex justify-content-between align-items-start gap-3">
+        <div>
+          <div class="route">{% if ride.direction == 'INBOUND' %}{{ ride.location }} → Campus{% else %}Campus → {{ ride.location }}{% endif %}</div>
+          <div class="when">{{ ride.travel_date|date:"D, j M" }} · {{ ride.travel_time|time:"g:i A" }} · Ride #{{ ride.ride_no }}</div>
+        </div>
+        <div class="fare">₹{{ ride.fare_now }}<small>each now</small></div>
+      </div>
+
+      <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
+        <span class="bench" role="img" aria-label="{{ ride.seats_available }} of 3 seats open">
+          <i class="{% if ride.seats_available <= 2 %}taken{% endif %}"></i>
+          <i class="{% if ride.seats_available <= 1 %}taken{% endif %}"></i>
+          <i class="{% if ride.seats_available <= 0 %}taken{% endif %}"></i>
+        </span>
+        <span class="small fw-bold">{{ ride.seats_available }} open</span>
+        {% if ride.status == 'OPEN' %}<span class="chip ok">Open</span>{% elif ride.status == 'FULL' %}<span class="chip wait">Full</span>
+        {% elif ride.status == 'COMPLETED' %}<span class="chip ok">Completed</span>{% else %}<span class="chip no">{{ ride.get_status_display }}</span>{% endif %}
+      </div>
+
+      {% if ride.is_active %}
+      <form method="post" action="{% url 'delay_ride' ride.id %}" class="mt-3">
+        {% csrf_token %}
+        <button class="btn btn-ghost w-100">Train late? Shift ride +30 min</button>
+      </form>
+      {% endif %}
+
+      {% if ride.pending %}
+        <div class="mt-3 fw-bold small">Waiting for your reply</div>
+        {% for req in ride.pending %}
+        <div class="req">
+          <div>
+            <div class="fw-semibold">{{ req.requester.first_name }}</div>
+            <div class="small text-secondary">{{ req.requester.userprofile.roll_number }}</div>
+          </div>
+          <form method="post" action="{% url 'handle_request' req.id %}" class="d-flex gap-2 m-0">
+            {% csrf_token %}
+            <button name="action" value="reject" class="btn btn-ghost btn-sm">Decline</button>
+            <button name="action" value="accept" class="btn btn-bottle btn-sm">Accept</button>
+          </form>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      {% if ride.accepted %}
+        <div class="mt-3 fw-bold small">Riding with you</div>
+        {% for req in ride.accepted %}
+        <div class="req">
+          <div>
+            <div class="fw-semibold">{{ req.requester.first_name }}</div>
+            <div class="small text-secondary">{{ req.requester.userprofile.roll_number }} · <a href="{% url 'report_user' req.requester.id %}?ride={{ ride.id }}">Report</a></div>
+          </div>
+          <a class="btn btn-wa btn-sm" target="_blank" rel="noopener"
+             href="https://wa.me/91{{ req.requester.userprofile.phone_number }}?text={% filter urlencode %}Hi {{ req.requester.first_name }}, I posted the auto on {{ ride.travel_date|date:'j M' }} at {{ ride.travel_time|time:'g:i A' }}. Let's meet at the gate.{% endfilter %}">WhatsApp</a>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      {% if ride.is_active %}
+      <div class="d-flex gap-2 mt-3">
+        <form method="post" action="{% url 'complete_ride' ride.id %}" class="flex-fill m-0">{% csrf_token %}
+          <button class="btn btn-ghost btn-sm w-100">Mark completed</button></form>
+        <form method="post" action="{% url 'cancel_ride' ride.id %}" class="flex-fill m-0" onsubmit="return confirm('Cancel this ride? Co-riders will be notified.')">{% csrf_token %}
+          <button class="btn btn-ghost btn-sm w-100 text-danger">Cancel ride</button></form>
+      </div>
+      {% endif %}
+    </article>
+    {% empty %}
+    <div class="empty">
+      <div class="display">You haven't posted a ride</div>
+      <p>Heading to the station or back? Post it and split the fare.</p>
+      <a class="btn btn-auto" href="{% url 'create_ride' %}">Post a ride</a>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section class="tab-pane fade" id="tab-joined" role="tabpanel">
+    {% for req in joined_requests %}
+    {% with ride=req.ride %}
+    <article class="ride {% if ride.direction == 'INBOUND' %}inbound{% endif %}">
+      <div class="d-flex justify-content-between align-items-start gap-3">
+        <div>
+          <div class="route">{% if ride.direction == 'INBOUND' %}{{ ride.location }} → Campus{% else %}Campus → {{ ride.location }}{% endif %}</div>
+          <div class="when">{{ ride.travel_date|date:"D, j M" }} · {{ ride.travel_time|time:"g:i A" }} · by {{ ride.creator.first_name }}</div>
+        </div>
+        {% if req.status == 'ACCEPTED' %}<span class="chip ok">Accepted</span>
+        {% elif req.status == 'PENDING' %}<span class="chip wait">Waiting</span>
+        {% elif req.status == 'CANCELLED' %}<span class="chip">Cancelled</span>
+        {% else %}<span class="chip no">Declined</span>{% endif %}
+      </div>
+
+      {% if req.status == 'ACCEPTED' and ride.is_active %}
+        <div class="small text-secondary mt-2">You pay ₹{{ ride.fare_now }} right now.{% if ride.notes %} Note: “{{ ride.notes }}”{% endif %}</div>
+        <a class="btn btn-wa w-100 mt-3" target="_blank" rel="noopener"
+           href="https://wa.me/91{{ ride.creator.userprofile.phone_number }}?text={% filter urlencode %}Hi {{ ride.creator.first_name }}, I'm joining your auto on {{ ride.travel_date|date:'j M' }} at {{ ride.travel_time|time:'g:i A' }}. Where at the gate should I meet you?{% endfilter %}">Message {{ ride.creator.first_name }} on WhatsApp</a>
+        <div class="d-flex gap-2 mt-2">
+          <form method="post" action="{% url 'leave_ride' ride.id %}" class="flex-fill m-0" onsubmit="return confirm('Leave this ride?')">{% csrf_token %}
+            <button class="btn btn-ghost btn-sm w-100">Leave ride</button></form>
+          <a class="btn btn-ghost btn-sm flex-fill" href="{% url 'report_user' ride.creator_id %}?ride={{ ride.id }}">Report</a>
+        </div>
+      {% elif req.status == 'ACCEPTED' %}
+        <p class="small text-secondary mt-2 mb-0">This ride is {{ ride.get_status_display|lower }}.</p>
+      {% elif req.status == 'PENDING' %}
+        <p class="small text-secondary mt-2">The creator will reply soon. Their number unlocks once they accept.</p>
+        <form method="post" action="{% url 'cancel_request' req.id %}">{% csrf_token %}
+          <button class="btn btn-ghost btn-sm w-100">Cancel request</button></form>
+      {% else %}
+        <a class="btn btn-ghost w-100 mt-3" href="{% url 'ride_feed' %}">Find another auto</a>
+      {% endif %}
+    </article>
+    {% endwith %}
+    {% empty %}
+    <div class="empty">
+      <div class="display">No join requests yet</div>
+      <p>Find an auto near your time and tap Request to join.</p>
+      <a class="btn btn-auto" href="{% url 'ride_feed' %}">Find an auto</a>
+    </div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

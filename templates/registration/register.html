@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Create account{% endblock %}
+{% block content %}
+<h1 class="h3 mt-2">Join the pool</h1>
+<p class="text-secondary">Only @iiitdmj.ac.in emails. Your phone number stays hidden until a ride creator accepts you.</p>
+<form method="post" class="panel" novalidate>
+  {% csrf_token %}
+  {% for f in form %}
+    <div class="mb-3">
+      <label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}</label>
+      {{ f }}
+      {% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}
+      {{ f.errors }}
+    </div>
+  {% endfor %}
+  <button class="btn btn-auto w-100">Create account</button>
+</form>
+<p class="text-center mt-3">Already registered? <a href="{% url 'login' %}">Log in</a></p>
+<script>
+document.querySelectorAll('form.panel input, form.panel select').forEach(el=>{
+  if(el.type!=='hidden') el.classList.add(el.tagName==='SELECT'?'form-select':'form-control');
+});
+const e=document.getElementById('id_email'); if(e){e.placeholder='21bcs001@iiitdmj.ac.in';e.autocomplete='email'}
+const p=document.getElementById('id_phone_number'); if(p){p.inputMode='numeric';p.autocomplete='tel-national';p.placeholder='9876543210'}
+</script>
+{% endblock %}

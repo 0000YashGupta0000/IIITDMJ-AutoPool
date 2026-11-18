@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}One campus. Shared rides.{% endblock %}
+{% block content %}
+<section class="hero text-center pt-4">
+  <span class="chip ok mb-3">Campus exclusive · @iiitdmj.ac.in only</span>
+  <h1 style="font-size:2.3rem">Your destination.<br>Their direction.<br><em>Shared ride.</em></h1>
+  <p class="text-secondary mt-3">One Campus. Shared Rides. Lower Fares.<br>Split the auto from Dumna campus to the station and back.</p>
+  <div class="d-grid gap-2 mt-4">
+    <a class="btn btn-auto btn-lg" href="{% url 'register' %}">Sign up with your college email</a>
+    <a class="btn btn-ghost btn-lg" href="{% url 'login' %}">Log in</a>
+  </div>
+</section>
+
+<section class="mt-5">
+  <h2 class="h4">Why WhatsApp groups fail</h2>
+  <div class="panel small">
+    Ride messages get buried · nobody can see free seats · no time matching · train delays break plans ·
+    fares are split by hand · approvals are messy · and everyone's phone number is exposed to a big group.
+  </div>
+</section>
+
+<section class="mt-4">
+  <h2 class="h4">How Auto Pool fixes it</h2>
+  <div class="row g-2">
+    <div class="col-6"><div class="panel h-100"><b>±45 min matching</b><div class="small text-secondary">Only autos leaving near your time, with a seat free.</div></div></div>
+    <div class="col-6"><div class="panel h-100"><b>Live fare split</b><div class="small text-secondary">Total fare ÷ riders, updated as people join.</div></div></div>
+    <div class="col-6"><div class="panel h-100"><b>+30 min delay</b><div class="small text-secondary">One tap when the train is late. Co-riders are notified.</div></div></div>
+    <div class="col-6"><div class="panel h-100"><b>Private contact</b><div class="small text-secondary">WhatsApp unlocks only after the creator accepts.</div></div></div>
+    <div class="col-6"><div class="panel h-100"><b>Safety options</b><div class="small text-secondary">Female co-riders only, reporting, admin suspension.</div></div></div>
+    <div class="col-6"><div class="panel h-100"><b>Luggage aware</b><div class="small text-secondary">Know if trolley bags fit before you join.</div></div></div>
+  </div>
+</section>
+{% endblock %}

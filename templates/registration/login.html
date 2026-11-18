@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<h1 class="h3 mt-2">Split the auto, not the stress.</h1>
+<p class="text-secondary">Log in with your institute email to find or post a ride.</p>
+<form method="post" class="panel" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger py-2">{% for e in form.non_field_errors %}{{ e }} {% endfor %}
+    <a href="{% url 'check_email' %}">Resend verification link</a></div>{% endif %}
+  <div class="mb-3">
+    <label class="form-label" for="{{ form.username.id_for_label }}">Institute email</label>
+    {{ form.username }}{{ form.username.errors }}
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+    {{ form.password }}{{ form.password.errors }}
+  </div>
+  <input type="hidden" name="next" value="{{ next }}">
+  <button class="btn btn-auto w-100">Log in</button>
+</form>
+<p class="text-center mt-3">New here? <a href="{% url 'register' %}">Create an account</a></p>
+<script>document.querySelectorAll('input').forEach(i=>{if(['text','email','password'].includes(i.type))i.classList.add('form-control')})</script>
+{% endblock %}

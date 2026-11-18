@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Find an auto{% endblock %}
+{% block content %}
+<div class="hero">
+  <p class="hi">Hey {{ user.first_name|default:"there" }}</p>
+  <h1>Split the auto,<br><em>not the stress.</em></h1>
+</div>
+
+<form method="get" class="panel mb-3" id="feed-form">
+  <div class="segmented mb-3">
+    <input type="radio" name="direction" id="d-in" value="INBOUND" {% if request.GET.direction == 'INBOUND' %}checked{% endif %}>
+    <label for="d-in">To campus</label>
+    <input type="radio" name="direction" id="d-out" value="OUTBOUND" {% if request.GET.direction != 'INBOUND' %}checked{% endif %}>
+    <label for="d-out">From campus</label>
+  </div>
+
+  <div class="quick" role="group" aria-label="Quick times">
+    <button type="button" data-mins="0">Now</button>
+    <button type="button" data-mins="60">In 1 hour</button>
+    <button type="button" data-mins="180">In 3 hours</button>
+    <button type="button" data-tonight="20:00">Tonight 8 PM</button>
+    <button type="button" data-tomorrow="07:00">Tomorrow 7 AM</button>
+  </div>
+
+  <div class="row g-2">
+    <div class="col-6"><label class="form-label" for="f-date">Date</label>
+      <input class="form-control" type="date" id="f-date" name="date" value="{{ request.GET.date }}"></div>
+    <div class="col-6"><label class="form-label" for="f-time">Time</label>
+      <input class="form-control" type="time" id="f-time" name="time" value="{{ request.GET.time }}"></div>
+  </div>
+  <div class="form-text mb-3">Shows autos leaving within 45 minutes of this time.</div>
+
+  {% if is_female %}
+  <div class="form-check form-switch mb-3">
+    <input class="form-check-input" type="checkbox" role="switch" id="f-female" name="female_only" value="1" {% if request.GET.female_only %}checked{% endif %}>
+    <label class="form-check-label" for="f-female">Female co-riders only</label>
+  </div>
+  {% endif %}
+  <button class="btn btn-auto w-100">Search autos</button>
+</form>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 m-0">{{ rides|length }} auto{{ rides|length|pluralize }} found</h2>
+  <a class="btn btn-bottle btn-sm" href="{% url 'create_ride' %}">+ Post a ride</a>
+</div>
+
+{% for ride in rides %}
+  {% include "rides/_ride_card.html" %}
+{% empty %}
+  <div class="empty">
+    <div class="display">No autos around that time</div>
+    <p>Try another time, or post your own and let others join you.</p>
+    <a class="btn btn-auto" href="{% url 'create_ride' %}">Post a ride</a>
+  </div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const f=document.getElementById('feed-form'), d=document.getElementById('f-date'), t=document.getElementById('f-time');
+  const p=n=>String(n).padStart(2,'0'), iso=x=>x.getFullYear()+'-'+p(x.getMonth()+1)+'-'+p(x.getDate());
+  function set(dt){ d.value=iso(dt); t.value=p(dt.getHours())+':'+p(dt.getMinutes()); f.submit(); }
+  document.querySelectorAll('.quick button').forEach(b=>b.addEventListener('click',()=>{
+    const n=new Date();
+    if(b.dataset.mins!==undefined){ n.setMinutes(n.getMinutes()+ +b.dataset.mins); }
+    else { const [h,m]=(b.dataset.tonight||b.dataset.tomorrow).split(':'); if(b.dataset.tomorrow) n.setDate(n.getDate()+1); n.setHours(+h,+m,0,0); }
+    set(n);
+  }));
+})();
+</script>
+{% endblock %}

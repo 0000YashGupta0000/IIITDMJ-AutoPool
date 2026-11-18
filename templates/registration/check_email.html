@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Check your email{% endblock %}
+{% block content %}
+<div class="panel text-center mt-3">
+  <h1 class="h3">Check your inbox</h1>
+  <p class="text-secondary">We sent a verification link to <b>{{ email|default:"your institute email" }}</b>. It works for 24 hours.</p>
+  {% if dev_link %}
+    <div class="fare-preview text-start mb-3">
+      <b>Prototype shortcut:</b> there is no real mail server yet, so the email was printed in the terminal.
+      <a class="btn btn-auto w-100 mt-2" href="{{ dev_link }}">Verify now</a>
+    </div>
+  {% endif %}
+  <form method="post" action="{% url 'resend_verification' %}" class="text-start">
+    {% csrf_token %}
+    <label class="form-label" for="rs-email">Didn't get it? Send again</label>
+    <input class="form-control mb-2" id="rs-email" type="email" name="email" value="{{ email }}" placeholder="you@iiitdmj.ac.in" required>
+    <button class="btn btn-ghost w-100">Resend link</button>
+  </form>
+  <a class="d-block mt-3" href="{% url 'login' %}">Back to log in</a>
+</div>
+{% endblock %}

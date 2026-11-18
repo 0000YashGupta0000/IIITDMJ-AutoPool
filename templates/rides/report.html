@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Report{% endblock %}
+{% block content %}
+<h1 class="h3 mt-2">Report {{ target.first_name|default:"this student" }}</h1>
+<p class="text-secondary">Reports go to the Auto Pool admins only. The student is not told who reported them.</p>
+<form method="post" class="panel" novalidate>
+  {% csrf_token %}
+  <div class="mb-3"><label class="form-label" for="{{ form.reason.id_for_label }}">Reason</label>{{ form.reason }}{{ form.reason.errors }}</div>
+  <div class="mb-3"><label class="form-label" for="{{ form.description.id_for_label }}">Details</label>{{ form.description }}{{ form.description.errors }}</div>
+  <button class="btn btn-auto w-100">Send report</button>
+  <a class="btn btn-ghost w-100 mt-2" href="{% url 'my_rides' %}">Back</a>
+</form>
+<script>
+document.querySelectorAll('form.panel select').forEach(e=>e.classList.add('form-select'));
+document.querySelectorAll('form.panel textarea').forEach(e=>e.classList.add('form-control'));
+</script>
+{% endblock %}
